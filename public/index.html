@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartCare - Gestion RDV</title>
+<style>
+body{font-family:Arial;background:#f0f6ff;margin:0;padding:20px}
+.container{max-width:900px;margin:auto;background:white;padding:25px;border-radius:15px;box-shadow:0 5px 15px rgba(0,0,0,0.1)}
+h1{color:#2563eb;text-align:center}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;background:#f8fafc;padding:15px;border-radius:10px}
+.form input{padding:10px;border:1px solid #ddd;border-radius:8px}
+.form button{grid-column:span 2;background:#2563eb;color:white;border:none;padding:12px;border-radius:8px;cursor:pointer;font-weight:bold}
+.form button:hover{background:#1d4ed8}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th{background:#2563eb;color:white;padding:10px}
+td{padding:10px;border-bottom:1px solid #eee;text-align:center}
+.btn-del{background:#ef4444;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer}
+.btn-del:hover{background:#dc2626}
+.count{margin:10px 0;font-weight:bold;color:#475569}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🏥 SmartCare - Appointments</h1>
+<div class="form">
+<input id="patientName" placeholder="Nom Patient">
+<input id="doctorName" placeholder="Nom Docteur">
+<input id="date" type="date">
+<input id="time" type="time">
+<button onclick="addAppointment()">+ Ajouter Rendez-vous</button>
+</div>
+<div class="count" id="count">Chargement...</div>
+<table>
+<thead><tr><th>ID</th><th>Patient</th><th>Docteur</th><th>Date</th><th>Heure</th><th>Status</th><th>Action</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+<script>
+const API = "/api/appointments";
+async function loadAppointments(){
+  const res = await fetch(API);
+  const data = await res.json();
+  document.getElementById("count").innerText = `Total: ${data.count} rendez-vous`;
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+  data.appointments.forEach(a=>{
+    tbody.innerHTML += `<tr>
+      <td>${a.id}</td><td>${a.patientName}</td><td>${a.doctorName}</td>
+      <td>${a.date}</td><td>${a.time}</td><td>${a.status}</td>
+      <td><button class="btn-del" onclick="deleteAppointment(${a.id})">Supprimer</button></td>
+    </tr>`;
+  });
+}
+async function addAppointment(){
+  const patientName = document.getElementById("patientName").value;
+  const doctorName = document.getElementById("doctorName").value;
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+  if(!patientName||!doctorName||!date||!time){alert("Remplir tous les champs !");return;}
+  const res = await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({patientName,doctorName,date,time})});
+  if(res.ok){document.getElementById("patientName").value="";document.getElementById("doctorName").value="";loadAppointments();}
+  else{alert("Erreur !");}
+}
+async function deleteAppointment(id){
+  if(!confirm("Supprimer ce RDV ?")) return;
+  await fetch(`${API}/${id}`,{method:"DELETE"});
+  loadAppointments();
+}
+loadAppointments();
+</script>
+</body>
+</html>
